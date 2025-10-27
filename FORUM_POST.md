@@ -296,10 +296,6 @@ Your script receives: title, message, devices, priority, volume, tag
 
 ---
 
-## 📸 Screenshots
-
-*(Add your screenshots here if you have them)*
-
 ## ⭐ Show Your Support
 
 If you find OSAM useful:
