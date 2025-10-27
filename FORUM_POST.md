@@ -1,5 +1,28 @@
 # OSAM - Open Sensor Alert Manager - Advanced Contact Sensor Monitoring
 
+**OSAM transforms your basic contact sensors into intelligent monitoring systems with powerful notification features.** It handles everything from simple window-open reminders to complex security monitoring with escalations, temperature checks, and multi-language support. Whether you need energy-saving alerts or critical security warnings that override quiet hours, OSAM adapts to your needs without requiring any coding skills.
+
+## 📌 TL;DR - Quick Overview
+
+**OSAM is a powerful blueprint for monitoring doors and windows with smart notifications, escalation warnings, and extensive customization.**
+
+**Key Features:**
+- 🔔 Smart repeat notifications with customizable intervals
+- 🚨 Escalation system for critical alerts (after X notifications)
+- 🌙 Quiet time with separate workday/weekend schedules (optional)
+- ⏸️ Counter-based snooze function
+- 🌡️ Temperature-based alerts (only notify when cold)
+- 🌍 Multi-language support (DE/EN/FR/IT) - use `<opened_duration_en>` in templates
+- 📊 Daily notification limits
+- 🎯 Custom actions on first/repeat/escalation/resolved
+- 💾 JSON storage for unlimited sensors
+
+**Perfect for:** Energy saving alerts, security monitoring, door left open reminders, freezer door warnings.
+
+**Setup time:** 5-10 minutes (create 2 helper entities, import blueprint, configure automation)
+
+---
+
 ## 🌟 Introduction
 
 OSAM (Open Sensor Alert Manager) is a comprehensive blueprint for monitoring contact sensors (doors/windows) with advanced features like escalation management, quiet time, temperature checks, and much more.
