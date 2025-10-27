@@ -1,0 +1,2857 @@
+blueprint:
+
+  name: OSAM - Open Sensor Alert Manager V3.12.1
+
+  description: |
+
+    **OSAM - Advanced monitoring system for contact sensors (doors/windows)**
+
+    
+
+    VERSION 3.12 - 2025-10-24 - FEATURE UPDATE
+
+    
+
+    NEW in V3.12:
+
+    - Optional escalation repeat (continue sending escalations on every repeat)
+
+    
+
+    NEW in V3.11:
+
+    - Quiet Time is now optional (can be disabled)
+
+    - Escalation based on notification count instead of time
+
+    - Escalation can override Quiet Time (optional)
+
+    - Separate Alexa volume for escalation notifications
+
+    
+
+    Core features: Smart detection, multi-language support, counter-based snooze,
+
+    temperature checks, escalation warnings, JSON storage for unlimited sensors.
+
+    
+
+    OSAM = Open Sensor Alert Manager
+
+    
+
+  domain: automation
+
+  
+
+  input:
+
+    trigger_entity:
+
+      name: Contact Sensor
+
+      description: The binary sensor or input_boolean to monitor (e.g. door/window contact sensor)
+
+      selector:
+
+        entity:
+
+          filter:
+
+            - domain: binary_sensor
+
+            - domain: input_boolean
+
+    
+
+    friendly_name:
+
+      name: Display Name
+
+      description: Custom display name for notifications (leave empty to use entity name)
+
+      default: ""
+
+      selector:
+
+        text:
+
+    
+
+    issue_state:
+
+      name: Issue State
+
+      description: Which sensor state triggers the alert (On=Open, Off=Closed)
+
+      default: "on"
+
+      selector:
+
+        select:
+
+          options:
+
+            - label: "On (Open)"
+
+              value: "on"
+
+            - label: "Off (Closed)"
+
+              value: "off"
+
+    
+
+    duration_issue_state:
+
+      name: Detection Grace Period
+
+      description: How long sensor must be in issue state before detection (minutes)
+
+      default: 10
+
+      selector:
+
+        number:
+
+          min: 0
+
+          max: 120
+
+          unit_of_measurement: "min"
+
+    
+
+    first_notification_delay:
+
+      name: First Notification Delay
+
+      description: Additional delay after detection before first alarm (minutes)
+
+      default: 0
+
+      selector:
+
+        number:
+
+          min: 0
+
+          max: 60
+
+          unit_of_measurement: "min"
+
+    
+
+    duration_resolved_state:
+
+      name: Close Grace Period (Seconds)
+
+      description: How long sensor must be closed before automation ends (seconds, max 300)
+
+      default: 120
+
+      selector:
+
+        number:
+
+          min: 0
+
+          max: 300
+
+          unit_of_measurement: "sec"
+
+    
+
+    helper_entity:
+
+      name: Helper Entity (input_boolean)
+
+      description: Required helper switch for repeat logic (create one per automation)
+
+      selector:
+
+        entity:
+
+          filter:
+
+            domain: input_boolean
+
+    
+
+    json_storage:
+
+      name: JSON Storage Entity
+
+      description: Input Text (IMPORTANT - must have max 10000+)
+
+      selector:
+
+        entity:
+
+          filter:
+
+            domain: input_text
+
+    
+
+    notify_services:
+
+      name: Notification Target Devices
+
+      description: Comma-separated list for script (e.g. mobile_app_phone,alexa_echo)
+
+      default: ""
+
+      selector:
+
+        text:
+
+    
+
+    notification_script:
+
+      name: Notification Script
+
+      description: Custom notification script (leave empty to use persistent_notification)
+
+      default: "script.zentrale_benachrichtigung"
+
+      selector:
+
+        text:
+
+    
+
+    notification_delete_script:
+
+      name: Notification Delete Script
+
+      description: Custom script to delete notifications (leave empty to use persistent_notification.dismiss)
+
+      default: "script.benachrichtigung_loschen"
+
+      selector:
+
+        text:
+
+    
+
+    notification_title:
+
+      name: Notification Title
+
+      description: "Title template for notifications. Variables: <friendly_name>, <opened_duration>, <counter>, <counter_ordinal>"
+
+      default: "âš ï¸ <friendly_name> is open!"
+
+      selector:
+
+        text:
+
+    
+
+    notification_msg_first:
+
+      name: Notification Message (First)
+
+      description: "Message for first notification. Variables: <friendly_name>, <opened_duration>, <counter>, <counter_ordinal>"
+
+      default: |
+
+        <friendly_name> has been open for <opened_duration>!
+
+      selector:
+
+        text:
+
+          multiline: true
+
+    
+
+    notification_msg_repeat:
+
+      name: Notification Message (Repeat)
+
+      description: "Message for repeat notifications. Variables: <friendly_name>, <opened_duration>, <counter>, <counter_ordinal>"
+
+      default: |
+
+        <friendly_name> is still open for <opened_duration>!
+
+      selector:
+
+        text:
+
+          multiline: true
+
+    
+
+    notification_msg_after_silence:
+
+      name: Notification Message (After Quiet Time)
+
+      description: "Message after quiet time ends. Variables: <friendly_name>, <opened_duration>, <counter>, <counter_ordinal>"
+
+      default: |
+
+        <friendly_name> is still open for <opened_duration>! (Reminder)
+
+      selector:
+
+        text:
+
+          multiline: true
+
+    
+
+    alexa_volume:
+
+      name: Alexa Volume
+
+      description: Volume level for Alexa notifications (0-100%)
+
+      default: 50
+
+      selector:
+
+        number:
+
+          min: 0
+
+          max: 100
+
+          step: 10
+
+    
+
+    delete_notification:
+
+      name: Delete Notification
+
+      description: Automatically delete notification when sensor closes
+
+      default: true
+
+      selector:
+
+        boolean:
+
+    
+
+    repeat_enabled:
+
+      name: Repeats Enabled
+
+      description: Enable repeated notifications while sensor remains in issue state
+
+      default: true
+
+      selector:
+
+        boolean:
+
+    
+
+    repeat_duration:
+
+      name: Repeat Interval
+
+      description: Time between repeat notifications (minutes)
+
+      default: 10
+
+      selector:
+
+        number:
+
+          min: 1
+
+          max: 120
+
+          unit_of_measurement: "min"
+
+    
+
+    enable_quiet_time:
+
+      name: Enable Quiet Time
+
+      description: Enable quiet time periods (disable for 24/7 notifications)
+
+      default: true
+
+      selector:
+
+        boolean:
+
+    
+
+    silence_starttime_workday:
+
+      name: Quiet Time Start (Workday)
+
+      default: "21:00:00"
+
+      selector:
+
+        time:
+
+    
+
+    silence_endtime_workday:
+
+      name: Quiet Time End (Workday)
+
+      default: "07:00:00"
+
+      selector:
+
+        time:
+
+    
+
+    silence_starttime_nonworkday:
+
+      name: Quiet Time Start (Non-Workday)
+
+      default: "22:00:00"
+
+      selector:
+
+        time:
+
+    
+
+    silence_endtime_nonworkday:
+
+      name: Quiet Time End (Non-Workday)
+
+      default: "09:00:00"
+
+      selector:
+
+        time:
+
+    
+
+    workday_entity:
+
+      name: Workday Sensor
+
+      description: Binary sensor to differentiate workday/non-workday quiet times (leave empty for single schedule)
+
+      default: ""
+
+      selector:
+
+        entity:
+
+          filter:
+
+            domain: binary_sensor
+
+    
+
+    enable_snooze:
+
+      name: Enable Snooze Function
+
+      default: false
+
+      selector:
+
+        boolean:
+
+    
+
+    snooze_helper:
+
+      name: Snooze Switch (input_boolean)
+
+      description: Helper switch to temporarily suppress notifications (create one per automation if needed)
+
+      default: ""
+
+      selector:
+
+        entity:
+
+          filter:
+
+            domain: input_boolean
+
+    
+
+    snooze_count:
+
+      name: Snooze Notification Count
+
+      description: How many notifications to suppress when snooze is active
+
+      default: 3
+
+      selector:
+
+        number:
+
+          min: 1
+
+          max: 20
+
+          unit_of_measurement: "notifications"
+
+    
+
+    enable_temperature_check:
+
+      name: Enable Temperature Check
+
+      default: false
+
+      selector:
+
+        boolean:
+
+    
+
+    outdoor_temperature_sensor:
+
+      name: Outdoor Temperature Sensor
+
+      description: Temperature sensor for conditional notifications (only notify if temp below threshold)
+
+      default: ""
+
+      selector:
+
+        entity:
+
+          filter:
+
+            domain: sensor
+
+            device_class: temperature
+
+    
+
+    outdoor_temperature_threshold:
+
+      name: Temperature Threshold
+
+      description: Only send notifications if outdoor temperature is below this value (Â°C)
+
+      default: 10
+
+      selector:
+
+        number:
+
+          min: -20
+
+          max: 30
+
+    
+
+    enable_notification_limit:
+
+      name: Enable Notification Limit
+
+      default: false
+
+      selector:
+
+        boolean:
+
+    
+
+    notification_daily_limit:
+
+      name: Daily Limit
+
+      description: Maximum number of notifications per day (0 = unlimited, resets at midnight)
+
+      default: 0
+
+      selector:
+
+        number:
+
+          min: 0
+
+          max: 50
+
+    
+
+    enable_escalation:
+
+      name: Enable Escalation
+
+      description: Send critical warnings after X notifications
+
+      default: false
+
+      selector:
+
+        boolean:
+
+    
+
+    escalation_after_count:
+
+      name: Escalation After Notification Count
+
+      description: Send escalation after this many notifications (0 = disabled)
+
+      default: 6
+
+      selector:
+
+        number:
+
+          min: 2
+
+          max: 50
+
+          unit_of_measurement: "notifications"
+
+    
+
+    escalation_override_quiet_time:
+
+      name: Escalation Overrides Quiet Time
+
+      description: Send escalation notifications even during quiet time
+
+      default: true
+
+      selector:
+
+        boolean:
+
+    
+
+    escalation_repeat_enabled:
+
+      name: Repeat Escalation
+
+      description: Continue sending escalation notifications on every repeat (not just once)
+
+      default: false
+
+      selector:
+
+        boolean:
+
+    
+
+    escalation_notify_services:
+
+      name: Escalation Notification Devices
+
+      description: Separate devices for escalations (empty = use normal devices)
+
+      default: ""
+
+      selector:
+
+        text:
+
+    
+
+    escalation_alexa_volume:
+
+      name: Escalation Alexa Volume
+
+      description: Separate volume for escalation notifications (0-100)
+
+      default: 80
+
+      selector:
+
+        number:
+
+          min: 0
+
+          max: 100
+
+          step: 10
+
+    
+
+    escalation_title:
+
+      name: Escalation Notification Title
+
+      description: "Title for critical escalation notifications. Variables: <friendly_name>, <opened_duration>, <counter>, <counter_ordinal>"
+
+      default: "ðŸš¨ CRITICAL: <friendly_name> open!"
+
+      selector:
+
+        text:
+
+    
+
+    escalation_message:
+
+      name: Escalation Notification Message
+
+      description: "Message for escalation notifications. Variables: <friendly_name>, <opened_duration>, <counter>, <counter_ordinal>"
+
+      default: |
+
+        <friendly_name> has been open for <opened_duration>!
+
+        This is a critical warning - please close immediately!
+
+      selector:
+
+        text:
+
+          multiline: true
+
+    
+
+    custom_action_escalation:
+
+      name: Custom Action (Escalation)
+
+      description: Additional actions to execute when escalation is sent (e.g. flash lights, siren)
+
+      default: []
+
+      selector:
+
+        action:
+
+    
+
+    custom_action_on_send_notification:
+
+      name: Custom Action (First Notification)
+
+      description: Additional actions to execute when first notification is sent (e.g. turn on lights)
+
+      default: []
+
+      selector:
+
+        action:
+
+    
+
+    custom_action_repeat_notification:
+
+      name: Custom Action (Repeat)
+
+      description: Additional actions to execute on repeat notifications
+
+      default: []
+
+      selector:
+
+        action:
+
+    
+
+    custom_action_from_issue_state:
+
+      name: Custom Action (Issue Resolved)
+
+      description: Additional actions to execute when sensor returns to normal state
+
+      default: []
+
+      selector:
+
+        action:
+
+    
+
+    debug_mode:
+
+      name: Debug Mode
+
+      description: Enable detailed logging to system log for troubleshooting
+
+      default: false
+
+      selector:
+
+        boolean:
+
+
+
+mode: single
+
+max_exceeded: silent
+
+trigger:
+
+  - platform: state
+
+    entity_id: !input trigger_entity
+
+    to: !input issue_state
+
+    for:
+
+      minutes: !input duration_issue_state
+
+    id: issue_detected
+
+  
+
+  - platform: state
+
+    entity_id: !input helper_entity
+
+    to: "on"
+
+    for:
+
+      minutes: !input repeat_duration
+
+    id: repeat_check
+
+  
+
+  - platform: time
+
+    at: !input silence_endtime_workday
+
+    id: silence_end_workday
+
+  
+
+  - platform: time
+
+    at: !input silence_endtime_nonworkday
+
+    id: silence_end_nonworkday
+
+  
+
+  - platform: time
+
+    at: "00:00:01"
+
+    id: daily_counter_reset
+
+  
+
+  - platform: state
+
+    entity_id: !input trigger_entity
+
+    from: !input issue_state
+
+    for:
+
+      seconds: !input duration_resolved_state
+
+    id: issue_resolved
+
+
+
+variables:
+
+  trigger_entity: !input trigger_entity
+
+  friendly_name_input: !input friendly_name
+
+  issue_state: !input issue_state
+
+  helper_entity: !input helper_entity
+
+  json_storage: !input json_storage
+
+  first_notification_delay_minutes: !input first_notification_delay
+
+  repeat_duration_minutes: !input repeat_duration
+
+  notify_services: !input notify_services
+
+  notification_script: !input notification_script
+
+  notification_delete_script: !input notification_delete_script
+
+  notification_title_template: !input notification_title
+
+  notification_message_first_template: !input notification_msg_first
+
+  notification_message_repeat_template: !input notification_msg_repeat
+
+  notification_message_after_silence_template: !input notification_msg_after_silence
+
+  alexa_volume_input: !input alexa_volume
+
+  delete_notification: !input delete_notification
+
+  repeat_enabled: !input repeat_enabled
+
+  enable_quiet_time: !input enable_quiet_time
+
+  silence_starttime_workday: !input silence_starttime_workday
+
+  silence_endtime_workday: !input silence_endtime_workday
+
+  silence_starttime_nonworkday: !input silence_starttime_nonworkday
+
+  silence_endtime_nonworkday: !input silence_endtime_nonworkday
+
+  workday_entity: !input workday_entity
+
+  enable_snooze: !input enable_snooze
+
+  snooze_helper: !input snooze_helper
+
+  snooze_count: !input snooze_count
+
+  enable_temperature_check: !input enable_temperature_check
+
+  outdoor_temperature_sensor: !input outdoor_temperature_sensor
+
+  outdoor_temperature_threshold: !input outdoor_temperature_threshold
+
+  enable_notification_limit: !input enable_notification_limit
+
+  notification_daily_limit: !input notification_daily_limit
+
+  debug_mode: !input debug_mode
+
+  enable_escalation: !input enable_escalation
+
+  escalation_after_count: !input escalation_after_count
+
+  escalation_override_quiet_time: !input escalation_override_quiet_time
+
+  escalation_repeat_enabled: !input escalation_repeat_enabled
+
+  escalation_notify_services: !input escalation_notify_services
+
+  escalation_alexa_volume_input: !input escalation_alexa_volume
+
+  escalation_title_template: !input escalation_title
+
+  escalation_message_template: !input escalation_message
+
+  
+
+  display_name: >
+
+    {% if friendly_name_input != "" %}
+
+      {{ friendly_name_input }}
+
+    {% elif state_attr(trigger_entity, 'friendly_name') %}
+
+      {{ state_attr(trigger_entity, 'friendly_name') }}
+
+    {% else %}
+
+      {{ trigger_entity }}
+
+    {% endif %}
+
+  
+
+  sensor_key: "{{ trigger_entity | replace('.', '_') }}"
+
+  
+
+  has_json_storage: "{{ json_storage != '' }}"
+
+  
+
+  all_data: >
+
+    {% set json_str = states(json_storage) %}
+
+    {% if json_str not in ['', 'unknown', 'unavailable', 'None', none] %}
+
+      {% set parsed = json_str | from_json if (json_str | from_json is mapping) else {} %}
+
+      {{ parsed }}
+
+    {% else %}
+
+      {}
+
+    {% endif %}
+
+  
+
+  sensor_data: >
+
+    {% set data = all_data %}
+
+    {% set default_sensor = {
+
+      'counter': 0,
+
+      'first_opened': '',
+
+      'helper_active': false,
+
+      'repeat_timer': '',
+
+      'muted_until': '',
+
+      'snooze_remaining': 0,
+
+      'escalation_sent': false
+
+    } %}
+
+    {% if data is mapping and sensor_key in data %}
+
+      {% set sensor = data[sensor_key] %}
+
+      {% if sensor is mapping %}
+
+        {{ sensor }}
+
+      {% else %}
+
+        {{ default_sensor }}
+
+      {% endif %}
+
+    {% else %}
+
+      {{ default_sensor }}
+
+    {% endif %}
+
+  
+
+  notification_count: >
+
+    {% set data = sensor_data %}
+
+    {% if data is mapping %}
+
+      {{ data.get('counter', 0) | int(0) }}
+
+    {% else %}
+
+      0
+
+    {% endif %}
+
+  
+
+  escalation_sent: >
+
+    {% set data = sensor_data %}
+
+    {% if data is mapping %}
+
+      {{ data.get('escalation_sent', false) }}
+
+    {% else %}
+
+      false
+
+    {% endif %}
+
+  
+
+  first_opened_time: >
+
+    {% set data = sensor_data %}
+
+    {% if data is mapping %}
+
+      {{ data.get('first_opened', '') }}
+
+    {% else %}
+
+      ''
+
+    {% endif %}
+
+  
+
+  muted_until_time: >
+
+    {% set data = sensor_data %}
+
+    {% if data is mapping %}
+
+      {{ data.get('muted_until', '') }}
+
+    {% else %}
+
+      ''
+
+    {% endif %}
+
+  
+
+  snooze_remaining: >
+
+    {% set data = sensor_data %}
+
+    {% if data is mapping %}
+
+      {{ data.get('snooze_remaining', 0) | int(0) }}
+
+    {% else %}
+
+      0
+
+    {% endif %}
+
+  
+
+  opened_duration_seconds: >
+
+    {% if states(trigger_entity) == issue_state %}
+
+      {% set last_changed = states[trigger_entity].last_changed %}
+
+      {{ (now() - last_changed).total_seconds() | int }}
+
+    {% else %}
+
+      0
+
+    {% endif %}
+
+  
+
+  opened_duration_DE: >
+
+    {% set seconds = opened_duration_seconds | int %}
+
+    {% set days = (seconds // 86400) | int %}
+
+    {% set hours = ((seconds % 86400) // 3600) | int %}
+
+    {% set minutes = ((seconds % 3600) // 60) | int %}
+
+    {% set result = namespace(parts=[]) %}
+
+    {% if days > 0 %}
+
+      {% set day_text = days ~ ' Tag' ~ ('e' if days != 1 else '') %}
+
+      {% set result.parts = result.parts + [day_text] %}
+
+    {% endif %}
+
+    {% if hours > 0 %}
+
+      {% set hour_text = hours ~ ' Stunde' ~ ('n' if hours != 1 else '') %}
+
+      {% set result.parts = result.parts + [hour_text] %}
+
+    {% endif %}
+
+    {% if minutes > 0 %}
+
+      {% set minute_text = minutes ~ ' Minute' ~ ('n' if minutes != 1 else '') %}
+
+      {% set result.parts = result.parts + [minute_text] %}
+
+    {% endif %}
+
+    {% if result.parts | length > 0 %}
+
+      {{ result.parts | join(' und ') }}
+
+    {% else %}
+
+      weniger als 1 Minute
+
+    {% endif %}
+
+  
+
+  opened_duration_EN: >
+
+    {% set seconds = opened_duration_seconds | int %}
+
+    {% set days = (seconds // 86400) | int %}
+
+    {% set hours = ((seconds % 86400) // 3600) | int %}
+
+    {% set minutes = ((seconds % 3600) // 60) | int %}
+
+    {% set result = namespace(parts=[]) %}
+
+    {% if days > 0 %}
+
+      {% set day_text = days ~ ' day' ~ ('s' if days != 1 else '') %}
+
+      {% set result.parts = result.parts + [day_text] %}
+
+    {% endif %}
+
+    {% if hours > 0 %}
+
+      {% set hour_text = hours ~ ' hour' ~ ('s' if hours != 1 else '') %}
+
+      {% set result.parts = result.parts + [hour_text] %}
+
+    {% endif %}
+
+    {% if minutes > 0 %}
+
+      {% set minute_text = minutes ~ ' minute' ~ ('s' if minutes != 1 else '') %}
+
+      {% set result.parts = result.parts + [minute_text] %}
+
+    {% endif %}
+
+    {% if result.parts | length > 0 %}
+
+      {{ result.parts | join(' and ') }}
+
+    {% else %}
+
+      less than 1 minute
+
+    {% endif %}
+
+  
+
+  opened_duration_FR: >
+
+    {% set seconds = opened_duration_seconds | int %}
+
+    {% set days = (seconds // 86400) | int %}
+
+    {% set hours = ((seconds % 86400) // 3600) | int %}
+
+    {% set minutes = ((seconds % 3600) // 60) | int %}
+
+    {% set result = namespace(parts=[]) %}
+
+    {% if days > 0 %}
+
+      {% set day_text = days ~ ' jour' ~ ('s' if days != 1 else '') %}
+
+      {% set result.parts = result.parts + [day_text] %}
+
+    {% endif %}
+
+    {% if hours > 0 %}
+
+      {% set hour_text = hours ~ ' heure' ~ ('s' if hours != 1 else '') %}
+
+      {% set result.parts = result.parts + [hour_text] %}
+
+    {% endif %}
+
+    {% if minutes > 0 %}
+
+      {% set minute_text = minutes ~ ' minute' ~ ('s' if minutes != 1 else '') %}
+
+      {% set result.parts = result.parts + [minute_text] %}
+
+    {% endif %}
+
+    {% if result.parts | length > 0 %}
+
+      {{ result.parts | join(' et ') }}
+
+    {% else %}
+
+      moins d'une minute
+
+    {% endif %}
+
+  
+
+  opened_duration_IT: >
+
+    {% set seconds = opened_duration_seconds | int %}
+
+    {% set days = (seconds // 86400) | int %}
+
+    {% set hours = ((seconds % 86400) // 3600) | int %}
+
+    {% set minutes = ((seconds % 3600) // 60) | int %}
+
+    {% set result = namespace(parts=[]) %}
+
+    {% if days > 0 %}
+
+      {% set day_text = (days ~ ' giorno') if days == 1 else (days ~ ' giorni') %}
+
+      {% set result.parts = result.parts + [day_text] %}
+
+    {% endif %}
+
+    {% if hours > 0 %}
+
+      {% set hour_text = (hours ~ ' ora') if hours == 1 else (hours ~ ' ore') %}
+
+      {% set result.parts = result.parts + [hour_text] %}
+
+    {% endif %}
+
+    {% if minutes > 0 %}
+
+      {% set minute_text = (minutes ~ ' minuto') if minutes == 1 else (minutes ~ ' minuti') %}
+
+      {% set result.parts = result.parts + [minute_text] %}
+
+    {% endif %}
+
+    {% if result.parts | length > 0 %}
+
+      {{ result.parts | join(' e ') }}
+
+    {% else %}
+
+      meno di un minuto
+
+    {% endif %}
+
+  
+
+  opened_duration: "{{ opened_duration_DE }}"
+
+  
+
+  counter_ordinal_DE: >
+
+    {% set count = notification_count | int(0) %}
+
+    {% if count == 0 %}erste{% elif count == 1 %}zweite{% elif count == 2 %}dritte{% elif count == 3 %}vierte{% elif count == 4 %}fÃ¼nfte{% elif count == 5 %}sechste{% elif count == 6 %}siebte{% elif count == 7 %}achte{% elif count == 8 %}neunte{% elif count == 9 %}zehnte{% elif count == 10 %}elfte{% elif count == 11 %}zwÃ¶lfte{% elif count == 12 %}dreizehnte{% elif count == 13 %}vierzehnte{% elif count == 14 %}fÃ¼nfzehnte{% elif count == 15 %}sechzehnte{% elif count == 16 %}siebzehnte{% elif count == 17 %}achtzehnte{% elif count == 18 %}neunzehnte{% elif count == 19 %}zwanzigste{% else %}{{ count + 1 }}.{% endif %}
+
+  
+
+  counter_ordinal_EN: >
+
+    {% set count = notification_count | int(0) %}
+
+    {% if count == 0 %}first{% elif count == 1 %}second{% elif count == 2 %}third{% elif count == 3 %}fourth{% elif count == 4 %}fifth{% elif count == 5 %}sixth{% elif count == 6 %}seventh{% elif count == 7 %}eighth{% elif count == 8 %}ninth{% elif count == 9 %}tenth{% elif count == 10 %}eleventh{% elif count == 11 %}twelfth{% elif count == 12 %}thirteenth{% elif count == 13 %}fourteenth{% elif count == 14 %}fifteenth{% elif count == 15 %}sixteenth{% elif count == 16 %}seventeenth{% elif count == 17 %}eighteenth{% elif count == 18 %}nineteenth{% elif count == 19 %}twentieth{% else %}{{ count + 1 }}th{% endif %}
+
+  
+
+  counter_ordinal_FR: >
+
+    {% set count = notification_count | int(0) %}
+
+    {% if count == 0 %}premiÃ¨re{% elif count == 1 %}deuxiÃ¨me{% elif count == 2 %}troisiÃ¨me{% elif count == 3 %}quatriÃ¨me{% elif count == 4 %}cinquiÃ¨me{% elif count == 5 %}sixiÃ¨me{% elif count == 6 %}septiÃ¨me{% elif count == 7 %}huitiÃ¨me{% elif count == 8 %}neuviÃ¨me{% elif count == 9 %}dixiÃ¨me{% elif count == 10 %}onziÃ¨me{% elif count == 11 %}douziÃ¨me{% elif count == 12 %}treiziÃ¨me{% elif count == 13 %}quatorziÃ¨me{% elif count == 14 %}quinziÃ¨me{% elif count == 15 %}seiziÃ¨me{% elif count == 16 %}dix-septiÃ¨me{% elif count == 17 %}dix-huitiÃ¨me{% elif count == 18 %}dix-neuviÃ¨me{% elif count == 19 %}vingtiÃ¨me{% else %}{{ count + 1 }}Ã¨me{% endif %}
+
+  
+
+  counter_ordinal_IT: >
+
+    {% set count = notification_count | int(0) %}
+
+    {% if count == 0 %}prima{% elif count == 1 %}seconda{% elif count == 2 %}terza{% elif count == 3 %}quarta{% elif count == 4 %}quinta{% elif count == 5 %}sesta{% elif count == 6 %}settima{% elif count == 7 %}ottava{% elif count == 8 %}nona{% elif count == 9 %}decima{% elif count == 10 %}undicesima{% elif count == 11 %}dodicesima{% elif count == 12 %}tredicesima{% elif count == 13 %}quattordicesima{% elif count == 14 %}quindicesima{% elif count == 15 %}sedicesima{% elif count == 16 %}diciassettesima{% elif count == 17 %}diciottesima{% elif count == 18 %}diciannovesima{% elif count == 19 %}ventesima{% else %}{{ count + 1 }}Âª{% endif %}
+
+  
+
+  counter_ordinal: "{{ counter_ordinal_DE }}"
+
+  
+
+  notification_id: "osam_{{ sensor_key }}"
+
+  notification_id_escalation: "osam_{{ sensor_key }}_escalation"
+
+  
+
+  alexa_volume: "{{ alexa_volume_input | float / 100 }}"
+
+  escalation_alexa_volume: "{{ escalation_alexa_volume_input | float / 100 }}"
+
+  
+
+  is_in_silence_period: >
+
+    {% if not enable_quiet_time %}
+
+      false
+
+    {% else %}
+
+      {% set now_time = now().strftime('%H:%M:%S') %}
+
+      {% set has_workday = workday_entity != '' and states(workday_entity) not in ['unknown', 'unavailable'] %}
+
+      {% if has_workday %}
+
+        {% set is_workday = is_state(workday_entity, 'on') %}
+
+        {% if is_workday %}
+
+          {% set start = silence_starttime_workday %}
+
+          {% set end = silence_endtime_workday %}
+
+        {% else %}
+
+          {% set start = silence_starttime_nonworkday %}
+
+          {% set end = silence_endtime_nonworkday %}
+
+        {% endif %}
+
+      {% else %}
+
+        {% set start = silence_starttime_workday %}
+
+        {% set end = silence_endtime_workday %}
+
+      {% endif %}
+
+      {% if start < end %}
+
+        {{ start <= now_time < end }}
+
+      {% else %}
+
+        {{ now_time >= start or now_time < end }}
+
+      {% endif %}
+
+    {% endif %}
+
+  
+
+  is_muted: >
+
+    {% set has_snooze = enable_snooze and snooze_helper != '' and states(snooze_helper) not in ['unknown', 'unavailable'] %}
+
+    {% if has_snooze and is_state(snooze_helper, 'on') %}
+
+      {% if snooze_remaining > 0 %}
+
+        true
+
+      {% else %}
+
+        false
+
+      {% endif %}
+
+    {% else %}
+
+      false
+
+    {% endif %}
+
+  
+
+  temperature_ok: >
+
+    {% if enable_temperature_check %}
+
+      {% set has_sensor = outdoor_temperature_sensor != '' and states(outdoor_temperature_sensor) not in ['unknown', 'unavailable'] %}
+
+      {% if has_sensor %}
+
+        {% if states(outdoor_temperature_sensor) | float < outdoor_temperature_threshold | float %}
+
+          true
+
+        {% else %}
+
+          false
+
+        {% endif %}
+
+      {% else %}
+
+        true
+
+      {% endif %}
+
+    {% else %}
+
+      true
+
+    {% endif %}
+
+  
+
+  limit_ok: >
+
+    {% if enable_notification_limit and notification_daily_limit > 0 %}
+
+      {% if notification_count < notification_daily_limit %}
+
+        true
+
+      {% else %}
+
+        false
+
+      {% endif %}
+
+    {% else %}
+
+      true
+
+    {% endif %}
+
+  
+
+  should_escalate: >
+
+    {% if enable_escalation and escalation_after_count > 0 %}
+
+      {% if notification_count >= escalation_after_count %}
+
+        {% if escalation_repeat_enabled %}
+
+          true
+
+        {% else %}
+
+          {% if not escalation_sent %}
+
+            true
+
+          {% else %}
+
+            false
+
+          {% endif %}
+
+        {% endif %}
+
+      {% else %}
+
+        false
+
+      {% endif %}
+
+    {% else %}
+
+      false
+
+    {% endif %}
+
+
+
+action:
+
+  - choose:
+
+      # ========== TRIGGER 1: ISSUE DETECTED ==========
+
+      - conditions:
+
+          - condition: trigger
+
+            id: issue_detected
+
+        sequence:
+
+          - service: input_boolean.turn_on
+
+            target:
+
+              entity_id: "{{ helper_entity }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ has_json_storage }}"
+
+            then:
+
+              - variables:
+
+                  updated_data: >
+
+                    {% set data = all_data %}
+
+                    {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                    {% set sensor_new = {
+
+                      'counter': notification_count | int(0),
+
+                      'first_opened': now().strftime('%Y-%m-%dT%H:%M:%S'),
+
+                      'helper_active': true,
+
+                      'repeat_timer': (now() + timedelta(minutes=repeat_duration_minutes)).strftime('%Y-%m-%dT%H:%M:%S'),
+
+                      'muted_until': sensor.get('muted_until', '') if sensor is mapping else '',
+
+                      'snooze_remaining': sensor.get('snooze_remaining', 0) | int(0) if sensor is mapping else 0,
+
+                      'escalation_sent': false
+
+                    } %}
+
+                    {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                    {{ data_new | tojson }}
+
+              
+
+              - service: input_text.set_value
+
+                target:
+
+                  entity_id: "{{ json_storage }}"
+
+                data:
+
+                  value: "{{ updated_data }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ debug_mode }}"
+
+            then:
+
+              - service: system_log.write
+
+                data:
+
+                  message: "[INFO] OSAM: {{ display_name }} - Issue detected"
+
+                  level: info
+
+                  logger: "osam.{{ sensor_key }}"
+
+          
+
+          - delay:
+
+              minutes: "{{ first_notification_delay_minutes }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ not (is_in_silence_period | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ not (is_muted | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ (temperature_ok | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ (limit_ok | bool) }}"
+
+            then:
+
+              - variables:
+
+                  msg_title_first: >
+
+                    {{ notification_title_template
+
+                      | replace('<friendly_name>', display_name)
+
+                      | replace('<opened_duration>', opened_duration)
+
+                      | replace('<counter>', notification_count | string)
+
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+
+                  msg_body_first: >
+
+                    {{ notification_message_first_template
+
+                      | replace('<friendly_name>', display_name)
+
+                      | replace('<opened_duration>', opened_duration)
+
+                      | replace('<counter>', notification_count | string)
+
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+
+              
+
+              - choose:
+
+                  - conditions:
+
+                      - condition: template
+
+                        value_template: "{{ notification_script != '' and notification_script in states | map(attribute='entity_id') | list }}"
+
+                    sequence:
+
+                      - service: "{{ notification_script }}"
+
+                        data:
+
+                          devices: "{{ notify_services }}"
+
+                          titel: "{{ msg_title_first }}"
+
+                          nachricht: "{{ msg_body_first }}"
+
+                          vorlage: "default"
+
+                          priority: "normal"
+
+                          alexa_lautstaerke: "{{ alexa_volume }}"
+
+                          tag: "{{ notification_id }}"
+
+                default:
+
+                  - service: persistent_notification.create
+
+                    data:
+
+                      title: "{{ msg_title_first }}"
+
+                      message: "{{ msg_body_first }}"
+
+                      notification_id: "{{ notification_id }}"
+
+              
+
+              - choose:
+
+                  - conditions: "{{ true }}"
+
+                    sequence: !input custom_action_on_send_notification
+
+              
+
+              - if:
+
+                  - condition: template
+
+                    value_template: "{{ has_json_storage }}"
+
+                then:
+
+                  - variables:
+
+                      updated_data_counter_first: >
+
+                        {% set json_str = states(json_storage) %}
+
+                        {% set data = json_str | from_json if (json_str not in ['', 'unknown', 'unavailable', 'None', none] and json_str | from_json is mapping) else {} %}
+
+                        {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                        {% set current_counter = sensor.get('counter', 0) | int(0) if sensor is mapping else 0 %}
+
+                        {% set sensor_new = dict(sensor, counter=current_counter + 1) if sensor is mapping else {'counter': current_counter + 1} %}
+
+                        {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                        {{ data_new | tojson }}
+
+                  
+
+                  - service: input_text.set_value
+
+                    target:
+
+                      entity_id: "{{ json_storage }}"
+
+                    data:
+
+                      value: "{{ updated_data_counter_first }}"
+
+              
+
+              - service: input_boolean.turn_off
+
+                target:
+
+                  entity_id: "{{ helper_entity }}"
+
+              
+
+              - delay:
+
+                  seconds: 10
+
+              
+
+              - service: input_boolean.turn_on
+
+                target:
+
+                  entity_id: "{{ helper_entity }}"
+
+            else:
+
+              - if:
+
+                  - condition: template
+
+                    value_template: "{{ debug_mode }}"
+
+                then:
+
+                  - service: system_log.write
+
+                    data:
+
+                      message: >
+
+                        [WARNING] OSAM: {{ display_name }} - First notification blocked: 
+
+                        Silence={{ is_in_silence_period }}, 
+
+                        Muted={{ is_muted }}, 
+
+                        Temp={{ temperature_ok }}, 
+
+                        Limit={{ limit_ok }}
+
+                      level: warning
+
+                      logger: "osam.{{ sensor_key }}"
+
+              
+
+              - service: input_boolean.turn_off
+
+                target:
+
+                  entity_id: "{{ helper_entity }}"
+
+              
+
+              - delay:
+
+                  seconds: 10
+
+              
+
+              - service: input_boolean.turn_on
+
+                target:
+
+                  entity_id: "{{ helper_entity }}"
+
+      
+
+      # ========== TRIGGER 2: REPEAT CHECK ==========
+
+      - conditions:
+
+          - condition: trigger
+
+            id: repeat_check
+
+          - condition: template
+
+            value_template: "{{ repeat_enabled }}"
+
+          - condition: template
+
+            value_template: "{{ is_state(trigger_entity, issue_state) }}"
+
+        sequence:
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ debug_mode }}"
+
+            then:
+
+              - service: system_log.write
+
+                data:
+
+                  message: "[INFO] OSAM: {{ display_name }} - Repeat check triggered"
+
+                  level: info
+
+                  logger: "osam.{{ sensor_key }}"
+
+          
+
+          # Check if escalation should be sent
+          - if:
+              - condition: template
+                value_template: "{{ (should_escalate | bool) }}"
+              - condition: template
+                value_template: "{{ not (is_muted | bool) }}"
+              - condition: template
+                value_template: "{{ (temperature_ok | bool) }}"
+              - condition: or
+                conditions:
+                  - condition: template
+                    value_template: "{{ escalation_override_quiet_time }}"
+                  - condition: template
+                    value_template: "{{ not (is_in_silence_period | bool) }}"
+            then:
+              - if:
+                  - condition: template
+                    value_template: "{{ debug_mode }}"
+                then:
+                  - service: system_log.write
+                    data:
+                      message: "[WARNING] OSAM: {{ display_name }} - ESCALATION triggered after {{ notification_count }} notifications!"
+                      level: warning
+                      logger: "osam.{{ sensor_key }}"
+              
+              - variables:
+                  escalation_devices: >
+                    {% if escalation_notify_services != "" %}
+                      {{ escalation_notify_services }}
+                    {% else %}
+                      {{ notify_services }}
+                    {% endif %}
+                  escalation_title_var: >
+                    {{ escalation_title_template
+                      | replace('<friendly_name>', display_name)
+                      | replace('<opened_duration>', opened_duration)
+                      | replace('<counter>', notification_count | string)
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+                  escalation_message_var: >
+                    {{ escalation_message_template
+                      | replace('<friendly_name>', display_name)
+                      | replace('<opened_duration>', opened_duration)
+                      | replace('<counter>', notification_count | string)
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+              
+              - choose:
+                  - conditions:
+                      - condition: template
+                        value_template: "{{ notification_script != '' and notification_script in states | map(attribute='entity_id') | list }}"
+                    sequence:
+                      - service: "{{ notification_script }}"
+                        data:
+                          devices: "{{ escalation_devices }}"
+                          titel: "{{ escalation_title_var }}"
+                          nachricht: "{{ escalation_message_var }}"
+                          vorlage: "alarm"
+                          priority: "high"
+                          alexa_lautstaerke: "{{ escalation_alexa_volume }}"
+                          tag: "{{ notification_id_escalation }}"
+                default:
+                  - service: persistent_notification.create
+                    data:
+                      title: "{{ escalation_title_var }}"
+                      message: "{{ escalation_message_var }}"
+                      notification_id: "{{ notification_id_escalation }}"
+              
+              - if:
+                  - condition: template
+                    value_template: "{{ has_json_storage and not escalation_repeat_enabled }}"
+                then:
+                  - variables:
+                      updated_escalation_flag: >
+                        {% set json_str = states(json_storage) %}
+                        {% set data = json_str | from_json if (json_str not in ['', 'unknown', 'unavailable', 'None', none] and json_str | from_json is mapping) else {} %}
+                        {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+                        {% set sensor_new = dict(sensor, escalation_sent=true) if sensor is mapping else {'escalation_sent': true} %}
+                        {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+                        {{ data_new | tojson }}
+                  
+                  - service: input_text.set_value
+                    target:
+                      entity_id: "{{ json_storage }}"
+                    data:
+                      value: "{{ updated_escalation_flag }}"
+              
+              - choose:
+                  - conditions: "{{ true }}"
+                    sequence: !input custom_action_escalation
+              
+              # Reset helper for next repeat cycle after escalation
+              - service: input_boolean.turn_off
+                target:
+                  entity_id: "{{ helper_entity }}"
+              
+              - delay:
+                  seconds: 10
+              
+              - service: input_boolean.turn_on
+                target:
+                  entity_id: "{{ helper_entity }}"
+            else:
+              # Regular repeat notification (only if NO escalation was sent)
+              - if:
+                  - condition: template
+                    value_template: "{{ (not is_in_silence_period | bool) }}"
+                  - condition: template
+                    value_template: "{{ (not is_muted | bool) }}"
+                  - condition: template
+                    value_template: "{{ (temperature_ok | bool) }}"
+                  - condition: template
+                    value_template: "{{ (limit_ok | bool) }}"
+                then:
+                  - variables:
+                      msg_title_repeat: >
+                        {{ notification_title_template
+                          | replace('<friendly_name>', display_name)
+                          | replace('<opened_duration>', opened_duration)
+                          | replace('<counter>', notification_count | string)
+                          | replace('<counter_ordinal>', counter_ordinal) }}
+                      msg_body_repeat: >
+                        {{ notification_message_repeat_template
+                          | replace('<friendly_name>', display_name)
+                          | replace('<opened_duration>', opened_duration)
+                          | replace('<counter>', notification_count | string)
+                          | replace('<counter_ordinal>', counter_ordinal) }}
+                  
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ notification_script != '' and notification_script in states | map(attribute='entity_id') | list }}"
+                        sequence:
+                          - service: "{{ notification_script }}"
+                            data:
+                              devices: "{{ notify_services }}"
+                              titel: "{{ msg_title_repeat }}"
+                              nachricht: "{{ msg_body_repeat }}"
+                              vorlage: "default"
+                              priority: "normal"
+                              alexa_lautstaerke: "{{ alexa_volume }}"
+                              tag: "{{ notification_id }}"
+                    default:
+                      - service: persistent_notification.create
+                        data:
+                          title: "{{ msg_title_repeat }}"
+                          message: "{{ msg_body_repeat }}"
+                          notification_id: "{{ notification_id }}"
+                  
+                  - choose:
+                      - conditions: "{{ true }}"
+                        sequence: !input custom_action_repeat_notification
+                  
+                  - if:
+                      - condition: template
+                        value_template: "{{ has_json_storage }}"
+                    then:
+                      - variables:
+                          updated_data_counter_repeat: >
+                            {% set json_str = states(json_storage) %}
+                            {% set data = json_str | from_json if (json_str not in ['', 'unknown', 'unavailable', 'None', none] and json_str | from_json is mapping) else {} %}
+                            {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+                            {% set current_counter = sensor.get('counter', 0) | int(0) if sensor is mapping else 0 %}
+                            {% set sensor_new = dict(sensor, counter=current_counter + 1) if sensor is mapping else {'counter': current_counter + 1} %}
+                            {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+                            {{ data_new | tojson }}
+                      
+                      - service: input_text.set_value
+                        target:
+                          entity_id: "{{ json_storage }}"
+                        data:
+                          value: "{{ updated_data_counter_repeat }}"
+                  
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: "{{ helper_entity }}"
+                  
+                  - delay:
+                      seconds: 10
+                  
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: "{{ helper_entity }}"
+                else:
+                  - if:
+                      - condition: template
+                        value_template: "{{ debug_mode }}"
+                    then:
+                      - service: system_log.write
+                        data:
+                          message: >
+                            [WARNING] OSAM: {{ display_name }} - Repeat notification blocked: 
+                            Silence={{ is_in_silence_period }}, 
+                            Muted={{ is_muted }}, 
+                            Temp={{ temperature_ok }}, 
+                            Limit={{ limit_ok }}
+                          level: warning
+                          logger: "osam.{{ sensor_key }}"
+                  
+                  - service: input_boolean.turn_off
+                    target:
+                      entity_id: "{{ helper_entity }}"
+                  
+                  - delay:
+                      seconds: 10
+                  
+                  - service: input_boolean.turn_on
+                    target:
+                      entity_id: "{{ helper_entity }}"
+
+      # ========== TRIGGER 3: SILENCE END WORKDAY ==========
+
+      - conditions:
+
+          - condition: trigger
+
+            id: silence_end_workday
+
+          - condition: template
+
+            value_template: "{{ enable_quiet_time }}"
+
+          - condition: template
+
+            value_template: "{{ workday_entity != '' and is_state(workday_entity, 'on') }}"
+
+          - condition: template
+
+            value_template: "{{ is_state(trigger_entity, issue_state) }}"
+
+          - condition: template
+
+            value_template: "{{ is_state(helper_entity, 'on') }}"
+
+        sequence:
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ debug_mode }}"
+
+            then:
+
+              - service: system_log.write
+
+                data:
+
+                  message: "[INFO] OSAM: {{ display_name }} - Silence end (workday)"
+
+                  level: info
+
+                  logger: "osam.{{ sensor_key }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ not (is_muted | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ (temperature_ok | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ (limit_ok | bool) }}"
+
+            then:
+
+              - variables:
+
+                  msg_title_silence: >
+
+                    {{ notification_title_template
+
+                      | replace('<friendly_name>', display_name)
+
+                      | replace('<opened_duration>', opened_duration)
+
+                      | replace('<counter>', notification_count | string)
+
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+
+                  msg_body_silence: >
+
+                    {{ notification_message_after_silence_template
+
+                      | replace('<friendly_name>', display_name)
+
+                      | replace('<opened_duration>', opened_duration)
+
+                      | replace('<counter>', notification_count | string)
+
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+
+              
+
+              - choose:
+
+                  - conditions:
+
+                      - condition: template
+
+                        value_template: "{{ notification_script != '' and notification_script in states | map(attribute='entity_id') | list }}"
+
+                    sequence:
+
+                      - service: "{{ notification_script }}"
+
+                        data:
+
+                          devices: "{{ notify_services }}"
+
+                          titel: "{{ msg_title_silence }}"
+
+                          nachricht: "{{ msg_body_silence }}"
+
+                          vorlage: "default"
+
+                          priority: "normal"
+
+                          alexa_lautstaerke: "{{ alexa_volume }}"
+
+                          tag: "{{ notification_id }}"
+
+                default:
+
+                  - service: persistent_notification.create
+
+                    data:
+
+                      title: "{{ msg_title_silence }}"
+
+                      message: "{{ msg_body_silence }}"
+
+                      notification_id: "{{ notification_id }}"
+
+              
+
+              - if:
+
+                  - condition: template
+
+                    value_template: "{{ has_json_storage }}"
+
+                then:
+
+                  - variables:
+
+                      updated_data_counter_silence: >
+
+                        {% set json_str = states(json_storage) %}
+
+                        {% set data = json_str | from_json if (json_str not in ['', 'unknown', 'unavailable', 'None', none] and json_str | from_json is mapping) else {} %}
+
+                        {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                        {% set current_counter = sensor.get('counter', 0) | int(0) if sensor is mapping else 0 %}
+
+                        {% set sensor_new = dict(sensor, counter=current_counter + 1) if sensor is mapping else {'counter': current_counter + 1} %}
+
+                        {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                        {{ data_new | tojson }}
+
+                  
+
+                  - service: input_text.set_value
+
+                    target:
+
+                      entity_id: "{{ json_storage }}"
+
+                    data:
+
+                      value: "{{ updated_data_counter_silence }}"
+
+      
+
+      # ========== TRIGGER 4: SILENCE END NON-WORKDAY ==========
+
+      - conditions:
+
+          - condition: trigger
+
+            id: silence_end_nonworkday
+
+          - condition: template
+
+            value_template: "{{ enable_quiet_time }}"
+
+          - condition: template
+
+            value_template: "{{ workday_entity != '' and is_state(workday_entity, 'off') }}"
+
+          - condition: template
+
+            value_template: "{{ is_state(trigger_entity, issue_state) }}"
+
+          - condition: template
+
+            value_template: "{{ is_state(helper_entity, 'on') }}"
+
+        sequence:
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ debug_mode }}"
+
+            then:
+
+              - service: system_log.write
+
+                data:
+
+                  message: "[INFO] OSAM: {{ display_name }} - Silence end (non-workday)"
+
+                  level: info
+
+                  logger: "osam.{{ sensor_key }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ not (is_muted | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ (temperature_ok | bool) }}"
+
+              - condition: template
+
+                value_template: "{{ (limit_ok | bool) }}"
+
+            then:
+
+              - variables:
+
+                  msg_title_silence_nwd: >
+
+                    {{ notification_title_template
+
+                      | replace('<friendly_name>', display_name)
+
+                      | replace('<opened_duration>', opened_duration)
+
+                      | replace('<counter>', notification_count | string)
+
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+
+                  msg_body_silence_nwd: >
+
+                    {{ notification_message_after_silence_template
+
+                      | replace('<friendly_name>', display_name)
+
+                      | replace('<opened_duration>', opened_duration)
+
+                      | replace('<counter>', notification_count | string)
+
+                      | replace('<counter_ordinal>', counter_ordinal) }}
+
+              
+
+              - choose:
+
+                  - conditions:
+
+                      - condition: template
+
+                        value_template: "{{ notification_script != '' and notification_script in states | map(attribute='entity_id') | list }}"
+
+                    sequence:
+
+                      - service: "{{ notification_script }}"
+
+                        data:
+
+                          devices: "{{ notify_services }}"
+
+                          titel: "{{ msg_title_silence_nwd }}"
+
+                          nachricht: "{{ msg_body_silence_nwd }}"
+
+                          vorlage: "default"
+
+                          priority: "normal"
+
+                          alexa_lautstaerke: "{{ alexa_volume }}"
+
+                          tag: "{{ notification_id }}"
+
+                default:
+
+                  - service: persistent_notification.create
+
+                    data:
+
+                      title: "{{ msg_title_silence_nwd }}"
+
+                      message: "{{ msg_body_silence_nwd }}"
+
+                      notification_id: "{{ notification_id }}"
+
+              
+
+              - if:
+
+                  - condition: template
+
+                    value_template: "{{ has_json_storage }}"
+
+                then:
+
+                  - variables:
+
+                      updated_data_counter_nwd: >
+
+                        {% set json_str = states(json_storage) %}
+
+                        {% set data = json_str | from_json if (json_str not in ['', 'unknown', 'unavailable', 'None', none] and json_str | from_json is mapping) else {} %}
+
+                        {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                        {% set current_counter = sensor.get('counter', 0) | int(0) if sensor is mapping else 0 %}
+
+                        {% set sensor_new = dict(sensor, counter=current_counter + 1) if sensor is mapping else {'counter': current_counter + 1} %}
+
+                        {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                        {{ data_new | tojson }}
+
+                  
+
+                  - service: input_text.set_value
+
+                    target:
+
+                      entity_id: "{{ json_storage }}"
+
+                    data:
+
+                      value: "{{ updated_data_counter_nwd }}"
+
+      
+
+      # ========== TRIGGER 5: DAILY COUNTER RESET ==========
+
+      - conditions:
+
+          - condition: trigger
+
+            id: daily_counter_reset
+
+        sequence:
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ has_json_storage }}"
+
+            then:
+
+              - if:
+
+                  - condition: template
+
+                    value_template: "{{ debug_mode }}"
+
+                then:
+
+                  - service: system_log.write
+
+                    data:
+
+                      message: "[INFO] OSAM: {{ display_name }} - Daily counter reset"
+
+                      level: info
+
+                      logger: "osam.{{ sensor_key }}"
+
+              
+
+              - variables:
+
+                  updated_data_reset: >
+
+                    {% set data = all_data %}
+
+                    {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                    {% set sensor_new = dict(sensor, counter=0) if sensor is mapping else {'counter': 0} %}
+
+                    {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                    {{ data_new | tojson }}
+
+              
+
+              - service: input_text.set_value
+
+                target:
+
+                  entity_id: "{{ json_storage }}"
+
+                data:
+
+                  value: "{{ updated_data_reset }}"
+
+      
+
+      # ========== TRIGGER 6: ISSUE RESOLVED ==========
+
+      - conditions:
+
+          - condition: trigger
+
+            id: issue_resolved
+
+        sequence:
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ debug_mode }}"
+
+            then:
+
+              - service: system_log.write
+
+                data:
+
+                  message: "[INFO] OSAM: {{ display_name }} - Issue resolved"
+
+                  level: info
+
+                  logger: "osam.{{ sensor_key }}"
+
+          
+
+          - service: input_boolean.turn_off
+
+            target:
+
+              entity_id: "{{ helper_entity }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ delete_notification }}"
+
+            then:
+
+              - choose:
+
+                  - conditions:
+
+                      - condition: template
+
+                        value_template: "{{ notification_delete_script != '' and notification_delete_script in states | map(attribute='entity_id') | list }}"
+
+                    sequence:
+
+                      - service: "{{ notification_delete_script }}"
+
+                        data:
+
+                          devices: "{{ notify_services }}"
+
+                          tag: "{{ notification_id }}"
+
+                default:
+
+                  - service: persistent_notification.dismiss
+
+                    data:
+
+                      notification_id: "{{ notification_id }}"
+
+              
+
+              - choose:
+
+                  - conditions:
+
+                      - condition: template
+
+                        value_template: "{{ notification_delete_script != '' and notification_delete_script in states | map(attribute='entity_id') | list }}"
+
+                    sequence:
+
+                      - service: "{{ notification_delete_script }}"
+
+                        data:
+
+                          devices: "{{ notify_services }}"
+
+                          tag: "{{ notification_id_escalation }}"
+
+                default:
+
+                  - service: persistent_notification.dismiss
+
+                    data:
+
+                      notification_id: "{{ notification_id_escalation }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ has_json_storage }}"
+
+            then:
+
+              - variables:
+
+                  updated_data_cleanup: >
+
+                    {% set data = all_data %}
+
+                    {% set sensor = {
+
+                      'counter': 0,
+
+                      'first_opened': '',
+
+                      'helper_active': false,
+
+                      'repeat_timer': '',
+
+                      'muted_until': '',
+
+                      'snooze_remaining': 0,
+
+                      'escalation_sent': false
+
+                    } %}
+
+                    {% set data_new = dict(data, **{sensor_key: sensor}) if data is mapping else {sensor_key: sensor} %}
+
+                    {{ data_new | tojson }}
+
+              
+
+              - service: input_text.set_value
+
+                target:
+
+                  entity_id: "{{ json_storage }}"
+
+                data:
+
+                  value: "{{ updated_data_cleanup }}"
+
+          
+
+          - choose:
+
+              - conditions: "{{ true }}"
+
+                sequence: !input custom_action_from_issue_state
+
+  
+
+  # ========== SNOOZE LOGIC - DECREMENT COUNTER ==========
+
+  - if:
+
+      - condition: template
+
+        value_template: "{{ enable_snooze and snooze_helper != '' }}"
+
+      - condition: template
+
+        value_template: "{{ states(snooze_helper) not in ['unknown', 'unavailable'] }}"
+
+      - condition: template
+
+        value_template: "{{ is_state(snooze_helper, 'on') }}"
+
+      - condition: template
+
+        value_template: "{{ snooze_remaining > 0 }}"
+
+    then:
+
+      - if:
+
+          - condition: template
+
+            value_template: "{{ has_json_storage }}"
+
+        then:
+
+          - variables:
+
+              updated_snooze_counter: >
+
+                {% set data = all_data %}
+
+                {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                {% set current_remaining = snooze_remaining | int(0) %}
+
+                {% set new_remaining = current_remaining - 1 if current_remaining > 0 else 0 %}
+
+                {% set sensor_new = dict(sensor, snooze_remaining=new_remaining) if sensor is mapping else {'snooze_remaining': new_remaining} %}
+
+                {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                {{ data_new | tojson }}
+
+          
+
+          - service: input_text.set_value
+
+            target:
+
+              entity_id: "{{ json_storage }}"
+
+            data:
+
+              value: "{{ updated_snooze_counter }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ debug_mode }}"
+
+            then:
+
+              - service: system_log.write
+
+                data:
+
+                  message: "[INFO] OSAM: {{ display_name }} - Snooze counter: {{ (snooze_remaining | int(0)) - 1 }} notifications remaining"
+
+                  level: info
+
+                  logger: "osam.{{ sensor_key }}"
+
+          
+
+          - if:
+
+              - condition: template
+
+                value_template: "{{ ((snooze_remaining | int(0)) - 1) <= 0 }}"
+
+            then:
+
+              - service: input_boolean.turn_off
+
+                target:
+
+                  entity_id: "{{ snooze_helper }}"
+
+              
+
+              - if:
+
+                  - condition: template
+
+                    value_template: "{{ debug_mode }}"
+
+                then:
+
+                  - service: system_log.write
+
+                    data:
+
+                      message: "[INFO] OSAM: {{ display_name }} - Snooze auto-disabled (counter reached 0)"
+
+                      level: info
+
+                      logger: "osam.{{ sensor_key }}"
+
+  
+
+  # ========== SNOOZE LOGIC - INITIALIZE COUNTER ==========
+
+  - if:
+
+      - condition: template
+
+        value_template: "{{ enable_snooze and snooze_helper != '' }}"
+
+      - condition: template
+
+        value_template: "{{ states(snooze_helper) not in ['unknown', 'unavailable'] }}"
+
+      - condition: template
+
+        value_template: "{{ is_state(snooze_helper, 'on') }}"
+
+      - condition: template
+
+        value_template: "{{ snooze_remaining == 0 }}"
+
+    then:
+
+      - if:
+
+          - condition: template
+
+            value_template: "{{ has_json_storage }}"
+
+        then:
+
+          - variables:
+
+              updated_snooze_init: >
+
+                {% set data = all_data %}
+
+                {% set sensor = data.get(sensor_key, {}) if data is mapping else {} %}
+
+                {% set sensor_new = dict(sensor, snooze_remaining=snooze_count | int(0)) if sensor is mapping else {'snooze_remaining': snooze_count | int(0)} %}
+
+                {% set data_new = dict(data, **{sensor_key: sensor_new}) if data is mapping else {sensor_key: sensor_new} %}
+
+                {{ data_new | tojson }}
+
+          
+
+          - service: input_text.set_value
+
+            target:
+
+              entity_id: "{{ json_storage }}"
+
+            data:
+
+              value: "{{ updated_snooze_init }}"
+
+      
+
+      - if:
+
+          - condition: template
+
+            value_template: "{{ debug_mode }}"
+
+        then:
+
+          - service: system_log.write
+
+            data:
+
+              message: "[INFO] OSAM: {{ display_name }} - Snooze activated: {{ snooze_count }} notifications will be suppressed"
+
+              level: info
+
+              logger: "osam.{{ sensor_key }}"
